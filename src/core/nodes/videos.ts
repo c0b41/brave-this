@@ -1,4 +1,4 @@
-import constants from '../../utils/constants'
+import { RootObject } from '#utils/brave'
 
 export class Video {
   url: string
@@ -17,19 +17,21 @@ export class Video {
 }
 
 export default class Videos {
-  static parse($: any, data: []): Video[] {
+  static parse($: any, jsData: RootObject): Video[] {
     let videos: Video[] = []
 
-    let metadata = data[1].data.body.response.videos
+    let data = jsData.data.body.response.videos
 
-    videos = metadata.results.map((item: any) => {
-      const url = item.url
-      const title = item.title
-      const author = item.video.creator || null
-      const duration = item.video.duration || null
-      const views = item.video.views || null
-      return new Video({ url, title, author, duration, views })
-    })
+    if (data) {
+      videos = data.results.map((item: any) => {
+        const url = item.url
+        const title = item.title
+        const author = item.video.creator || null
+        const duration = item.video.duration || null
+        const views = item.video.views || null
+        return new Video({ url, title, author, duration, views })
+      })
+    }
 
     return videos
   }

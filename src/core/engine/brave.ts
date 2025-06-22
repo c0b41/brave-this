@@ -1,5 +1,5 @@
-import { fetchHTML, getHeaders } from '../../../utils'
-import constants from '../../../utils/constants'
+import { fetchHTML, getHeaders } from '#utils'
+import constants from '#utils/constants'
 
 export type SearchParams = {
   query: string

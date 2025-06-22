@@ -1,4 +1,5 @@
-import constants from '../../utils/constants'
+import { RootObject } from '#utils/brave'
+import { Thumbnail } from '#utils/brave/types'
 
 // Helper Types
 interface MetadataItem {
@@ -11,9 +12,9 @@ interface Rating {
   rating: string
 }
 
-interface AvailableOn {
+interface Image {
   url: string
-  source: string
+  source: string | null
 }
 
 interface Links {
@@ -26,15 +27,15 @@ interface Links {
 export default class KnowledgeGraph {
   type: string | null
   title: string | null
-  description: []
+  description: Array<string | undefined>
   url: string | null
   metadata: MetadataItem[]
   ratings: Rating[]
   available_on: string[]
-  images: AvailableOn[]
+  images: Image[]
   links: Links[]
 
-  constructor(private $: any, data: []) {
+  constructor(private $: any, jsData: RootObject) {
     this.type = null
     this.title = null
     this.description = []
@@ -45,85 +46,81 @@ export default class KnowledgeGraph {
     this.images = []
     this.links = []
 
-    this.parseTitle($)
-    this.parseDescription($, data)
-    this.parseUrl($)
-    this.parseType($, data)
-    this.parseMetadata($, data)
-    this.parseRatings($, data)
+    this.parseTitle($, jsData)
+    this.parseDescription($, jsData)
+    this.parseUrl($, jsData)
+    this.parseType($, jsData)
+    this.parseMetadata($, jsData)
+    this.parseRatings($, jsData)
     this.parseAvailableOn($)
-    this.parseImages($, data)
-    this.parseLinks($, data)
+    this.parseImages($, jsData)
+    this.parseLinks($, jsData)
   }
 
-  private parseTitle($: any): void {
-    const title1 = $(constants.SELECTORS.KNO_PANEL_TITLE).text().trim()
-    this.title = title1 || null
+  private parseTitle($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
+
+    let title = metadata?.title || null
+    this.title = title
   }
 
-  private parseDescription($: any, data: []): void {
-    let metadata = data[1].data.body.response.infobox.results[0]
+  private parseDescription($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
 
-    let desc1 = metadata.description
-    let desc2 = metadata.long_desc
+    let desc = metadata?.description
+    let desc2 = metadata?.long_desc
 
-    this.description = [desc1, desc2]
+    this.description = [desc, desc2]
   }
 
-  private parseUrl($: any): void {
-    const url1 = $(constants.SELECTORS.KNO_PANEL_URL).attr('href')?.trim() || null
+  private parseUrl($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
 
-    this.url = url1
+    this.url = metadata?.website_url || null
   }
 
-  private parseType($: any, data: []): void {
-    let metadata = data[1].data.body.response.infobox.results[0]
+  private parseType($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
 
-    this.type = metadata.category
+    this.type = metadata?.category || null
   }
 
-  private parseMetadata($: any, data: []): void {
-    let metadata = data[1].data.body.response.infobox.results[0]
+  private parseMetadata($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
 
-    if (metadata.attributes.length > 0) {
-      metadata.attributes.forEach((element: [key: string, val: string | null]) => {
+    if (metadata?.attributes && Array.isArray(metadata.attributes) && metadata.attributes.length > 0) {
+      metadata.attributes.forEach((element: string[]) => {
         const [key, value] = element
+
         if (value) {
           this.metadata.push({ title: key, value: value })
         }
       })
     }
-
-    $(constants.SELECTORS.KNO_PANEL_METADATA).each((_i: number, el: any) => {
-      const key = $(el).find('span.infobox-attr-name').text().trim()
-      const value = $(el).find('span.attr-value').text().trim()
-      if (value.length) {
-        this.metadata.push({ title: key, value })
-      }
-    })
   }
 
-  private parseRatings($: any, data: []): void {
-    let metadata = data[1].data.body.response.infobox.results[0]
+  private parseRatings($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
 
-    if (metadata.ratings.length > 0) {
+    if (metadata?.ratings && Array.isArray(metadata.ratings) && metadata.ratings.length > 0) {
       metadata.ratings.map((item: any) => {
         this.ratings.push({ name: item.profile.name, rating: item.ratingValue })
       })
     }
   }
 
+  // todo ?
   private parseAvailableOn($: any): void {
-    this.available_on = $(constants.SELECTORS.KNO_PANEL_AVAILABLE_ON)
-      .map((_i: number, el: any) => $(el).text().trim())
-      .get()
+    //this.available_on = $(constants.SELECTORS.KNO_PANEL_AVAILABLE_ON)
+    //  .map((_i: number, el: any) => $(el).text().trim())
+    //  .get()
   }
 
-  private parseImages($: any, data: []): void {
-    let metadata = data[1].data.body.response.infobox.results[0]
+  private parseImages($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
 
-    if (metadata.images.length > 0) {
-      this.images = metadata.images.map((image: any) => {
+    if (metadata?.images && Array.isArray(metadata.images) && metadata.images.length > 0) {
+      this.images = metadata.images.map((image: Thumbnail) => {
         return {
           url: image.src,
           source: null,
@@ -131,20 +128,20 @@ export default class KnowledgeGraph {
       })
     }
 
-    this.images = $(constants.SELECTORS.KNO_PANEL_IMAGES)
-      .map((_i: number, elem: any) => {
-        const url = $(elem).attr('src')?.trim()
-        const source = $(elem).parent().parent().parent().parent().parent().attr('data-lpage')?.trim() ?? null
-        return url ? { url, source } : null
-      })
-      .get()
-      .filter((img: any): img is { url: string; source?: string } => Boolean(img?.url))
+    //this.images = $(constants.SELECTORS.KNO_PANEL_IMAGES)
+    //  .map((_i: number, elem: any) => {
+    //    const url = $(elem).attr('src')?.trim()
+    //    const source = $(elem).parent().parent().parent().parent().parent().attr('data-lpage')?.trim() ?? null
+    //    return url ? { url, source } : null
+    //  })
+    //  .get()
+    //  .filter((img: any): img is { url: string; source?: string } => Boolean(img?.url))
   }
 
-  private parseLinks($: any, data: []): void {
-    let metadata = data[1].data.body.response.infobox.results[0]
+  private parseLinks($: any, jsData: RootObject): void {
+    let metadata = jsData.data.body.response.infobox?.results.find((item) => item.subtype == 'generic')
 
-    if (metadata.profiles.length > 0) {
+    if (metadata?.profiles && Array.isArray(metadata.profiles) && metadata.profiles.length > 0) {
       this.links = metadata.profiles.map((profile: any) => {
         return {
           url: profile.url,
@@ -153,15 +150,5 @@ export default class KnowledgeGraph {
         }
       })
     }
-
-    this.links = $(constants.SELECTORS.KNO_PANEL_SOCIALS)
-      .map((_i: number, el: any) => {
-        const name = $(el).attr('aria-label').trim()
-        const url = $(el).attr('href')?.trim()
-        const icon = $(el).find('img').attr('src')?.trim()
-        return name && url && icon ? { name, url, icon } : null
-      })
-      .get()
-      .filter(Boolean)
   }
 }

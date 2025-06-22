@@ -12,7 +12,14 @@
         "resolveJsonModule": true,
         "noEmit": true,
         "allowJs": true,
+        "baseUrl": ".",
+        "paths": {
+            "#nodes/*": ["./src/core/nodes/*"],
+            "#engine/*": ["./src/core/engine/*"],
+            "#utils": ["./src/utils/index.ts"],
+            "#utils/*": ["./src/utils/*"],
+        }
     },
-    "include": ["src/**/*.ts"],
+    "include": ["./src/**/**/*.ts"],
     "exclude": ["node_modules", "dist"]
 }

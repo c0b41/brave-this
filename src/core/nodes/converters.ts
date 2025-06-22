@@ -1,65 +1,58 @@
-import constants from '../../utils/constants'
+import { RootObject } from '#utils/brave'
 
 interface UnitConversionData {
-  input: string
-  output: string
+  amount: string
+  from_unit: string
+  to_unit: string
   formula: string
 }
 
 interface CurrencyConversionData {
   input: {
     name: string
-    value: string
+    value: number
   }
   output: {
     name: string
-    value: string
+    value: number
   }
+  amount: number
 }
 
-type ConversionData = UnitConversionData | CurrencyConversionData
+type ConversionData = UnitConversionData | CurrencyConversionData | null
 
 export default class Converter {
-  input: string | { name: string; value: string }
-  output: string | { name: string; value: string }
-  formula?: string
+  /**
+   * Parses top stories from HTML
+   */
+  static parse($: any, jsData: RootObject): ConversionData {
+    let unitData = jsData.data.body.response.rich?.results.find((item) => item.subtype == 'unitconversion')
 
-  constructor(private $: any, data: []) {
-    let metadata = data[1].data.body.response
-
-    console.log(metadata)
-    const unitInput = $(constants.SELECTORS.UNIT_CONVERTER_INPUT).attr('value')?.trim()
-    const unitOutput = $(constants.SELECTORS.UNIT_CONVERTER_OUTPUT).attr('value')?.trim()
-    const unitFormula = $(constants.SELECTORS.UNIT_CONVERTER_FORMULA).text().trim()
-
-    if (unitInput && unitOutput) {
-      this.input = unitInput
-      this.output = unitOutput
-      this.formula = unitFormula || undefined
-      return
+    if (unitData && unitData.unitConversion) {
+      return {
+        amount: unitData.unitConversion.amount,
+        from_unit: unitData.unitConversion.from_unit,
+        to_unit: unitData.unitConversion.to_unit,
+        formula: unitData.unitConversion.dimensionality,
+      }
     }
 
-    // Try currency conversion fallback
-    const currencyInputName = $(constants.SELECTORS.INPUT_CURRENCY_NAME).attr('data-name')?.trim()
-    const currencyOutputName = $(constants.SELECTORS.OUTPUT_CURRENCY_NAME).attr('data-name')?.trim()
-    const currencyInputValue = $(constants.SELECTORS.CURRENCY_CONVERTER_INPUT).text().trim()
-    const currencyOutputValue = $(constants.SELECTORS.CURRENCY_CONVERTER_OUTPUT).text().trim()
+    let currencytData = jsData.data.body.response.rich?.results.find((item) => item.subtype == 'currency')
 
-    if (currencyInputValue && currencyOutputValue && currencyInputName && currencyOutputName) {
-      this.input = {
-        name: currencyInputName,
-        value: currencyInputValue,
+    if (currencytData && currencytData.currency) {
+      return {
+        input: {
+          name: currencytData.currency.conversion.query.from_currency.full_name,
+          value: currencytData.currency.conversion.query.from_currency.decimals,
+        },
+        output: {
+          name: currencytData.currency.conversion.query.to_currency.full_name,
+          value: currencytData.currency.conversion.query.to_currency.decimals,
+        },
+        amount: currencytData.currency.conversion.amount,
       }
-
-      this.output = {
-        name: currencyOutputName,
-        value: currencyOutputValue,
-      }
-      return
     }
 
-    // Fallback: empty or null values
-    this.input = ''
-    this.output = ''
+    return null
   }
 }

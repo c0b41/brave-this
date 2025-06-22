@@ -1,7 +1,7 @@
-import constants from '../../utils/constants'
+import { RootObject } from '#utils/brave'
 
 // Define interface for translation result (optional)
-interface TranslationData {
+export interface TranslationData {
   source_language: string | null
   target_language: string | null
   source_text: string | null
@@ -9,22 +9,22 @@ interface TranslationData {
 }
 
 // Main class
-export default class Translation implements TranslationData {
-  source_language: string | null
-  target_language: string | null
-  source_text: string | null
-  target_text: string | null
+export default class Translation {
+  /**
+   * Parses top stories from HTML
+   */
+  static parse($: any, jsData: RootObject): TranslationData | null {
+    let translationData = jsData.data.body.response.rich?.results.find((item) => item.subtype == 'translator')
 
-  constructor(private $: any) {
-    const sourceLang = $(constants.SELECTORS.TR_SOURCE_LANGUAGE).text().trim()
-    const targetLang = $(constants.SELECTORS.TR_TARGET_LANGUAGE).text().trim()
+    if (translationData && translationData.translator) {
+      return {
+        source_language: translationData.translator.from_language.name,
+        source_text: translationData.translator.phrase,
+        target_language: translationData.translator.to_language.name,
+        target_text: null, // TODO: where is response
+      }
+    }
 
-    const sourceText = $(constants.SELECTORS.TR_SOURCE_TEXT).text().trim()
-    const targetText = $(constants.SELECTORS.TR_TARGET_TEXT).text().trim()
-
-    this.source_language = sourceText ? sourceLang : null
-    this.target_language = sourceText ? targetLang : null
-    this.source_text = sourceText || null
-    this.target_text = targetText || null
+    return null
   }
 }

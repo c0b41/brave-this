@@ -12,20 +12,20 @@
   },
   "scripts": {
     "build": "tsup",
-    "build:watch": "tsup --watch",
+    "dev": "tsup --watch",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@babel/generator": "^7.27.5",
     "cheerio": "1.0.0-rc.10",
-    "jintr": "^3.3.1",
     "jsonrepair": "^3.12.0",
-    "oxc-parser": "^0.73.0",
+    "lossless-json": "^4.1.0",
     "oxc-walker": "^0.3.0",
     "undici": "^7.10.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.31",
+    "oxc-parser": "^0.73.2",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },

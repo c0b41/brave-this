@@ -1,26 +1,27 @@
-import constants from '../../utils/constants'
+import { RootObject } from '#utils/brave'
+import { CheerioAPI } from 'cheerio'
 
-export class TimeData {
+export interface TimeData {
   hours: string | null
   date: string | null
-
-  constructor(data: { hours: string; date: string }) {
-    this.hours = data.hours
-    this.date = data.date
-  }
+  city: string | null
+  country: string | null
 }
 
 // Main class
 export default class Time {
-  static parse($: any): TimeData {
-    const timeEl = $(constants.SELECTORS.CURRENT_TIME_HOUR)
-    const dateEls = $(constants.SELECTORS.CURRENT_TIME_DATE)
-      .map((_i: number, el: any) => $(el).text().trim())
-      .get()
+  static parse($: CheerioAPI, jsData: RootObject): TimeData | null {
+    let timeData = jsData.data.body.response.rich?.results.find((item) => item.subtype == 'timezones')
 
-    let hours = timeEl.text() == '' ? null : timeEl.text().trim()
-    let date = dateEls[1] ? dateEls[0] : null
+    if (timeData && timeData.timezones && timeData.timezones.timezone) {
+      return {
+        hours: timeData.timezones.timezone.converted_time.strftime,
+        date: timeData.timezones.timezone.converted_time.strfdate,
+        city: timeData.timezones.timezone.converted_time.city.name,
+        country: timeData.timezones.timezone.converted_time.city.country,
+      }
+    }
 
-    return new TimeData({ hours, date })
+    return null
   }
 }

@@ -1,4 +1,4 @@
-import constants from '../../utils/constants'
+import constants from '#utils/constants'
 
 export class LocationData {
   title: string | null
