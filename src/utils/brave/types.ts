@@ -893,6 +893,8 @@ export interface Query {
    * @type {string}
    */
   summary_key?: string
+
+  related_queries?: RelatedQueries
 }
 
 export interface Videos {
@@ -2868,14 +2870,158 @@ export interface Timezone {
   show_date_only: boolean
 }
 
+export interface DefinitionDetail {
+  text: string
+  related_words: string[]
+  example_uses: string[]
+  labels: string[]
+}
+
+export interface PartOfSpeechDefinition {
+  part_of_speech: string
+  definitions: DefinitionDetail[]
+}
+
+export interface Definition {
+  audio_available: boolean
+  word: string
+  language: string
+  pronounciation: string
+  source_dict: string
+  attribution_text: string
+  attribution_url: string
+  definitions: PartOfSpeechDefinition[]
+}
+
+export interface LosslessNumber {
+  isLosslessNumber: boolean
+  value: number
+}
+
+/**
+ * Represents geographical coordinates (latitude and longitude).
+ */
+export interface Coords {
+  lat: LosslessNumber
+  lon: LosslessNumber
+}
+
+/**
+ * Represents wind information (speed and direction in degrees).
+ */
+export interface Wind {
+  speed: LosslessNumber
+  deg: LosslessNumber
+  gust?: LosslessNumber // Gust is optional, as it appears only in daily forecast
+}
+
+/**
+ * Represents specific weather conditions.
+ */
+export interface WeatherCondition {
+  id: LosslessNumber
+  main: string
+  description: string
+  icon: string
+}
+
+/**
+ * Represents current weather details for a location.
+ */
+export interface CurrentWeather {
+  ts: LosslessNumber
+  sunrise: LosslessNumber
+  sunset: LosslessNumber
+  temp: LosslessNumber
+  feels_like: LosslessNumber
+  pressure: LosslessNumber
+  humidity: LosslessNumber
+  dew_point: LosslessNumber
+  uvi: LosslessNumber
+  clouds: LosslessNumber
+  visibility: LosslessNumber
+  wind: Wind
+  weather: WeatherCondition
+}
+
+/**
+ * Represents daily temperature forecast details.
+ */
+export interface DailyTemperature {
+  day: LosslessNumber
+  min: LosslessNumber
+  max: LosslessNumber
+  night: LosslessNumber
+  evening: LosslessNumber
+  morning: LosslessNumber
+}
+
+/**
+ * Represents daily 'feels like' temperature forecast details.
+ */
+export interface DailyFeelsLike {
+  day: LosslessNumber
+  night: LosslessNumber
+  evening: LosslessNumber
+  morning: LosslessNumber
+}
+
+/**
+ * Represents a daily weather forecast entry.
+ */
+export interface DailyForecast {
+  ts: LosslessNumber
+  date_i18n: string
+  sunrise: LosslessNumber
+  sunset: LosslessNumber
+  moonrise: LosslessNumber
+  moonset: LosslessNumber
+  temperature: DailyTemperature
+  feels_like: DailyFeelsLike
+  pressure: LosslessNumber
+  humidity: LosslessNumber
+  dew_point: LosslessNumber
+  wind: Wind
+  clouds: LosslessNumber
+  pop: LosslessNumber
+  uvi: LosslessNumber
+  weather: WeatherCondition
+  rain?: LosslessNumber // Rain is optional
+}
+
+/**
+ * Represents location information.
+ */
+export interface Location {
+  id: LosslessNumber
+  name: string
+  country: string
+  state: string
+  coords: Coords
+  population: LosslessNumber
+  sunrise: LosslessNumber
+  sunset: LosslessNumber
+  tzoffset: LosslessNumber
+}
+
+/**
+ * Represents the top-level weather data structure.
+ */
+export interface Weather {
+  location: Location
+  current_time_iso: string
+  current_weather: CurrentWeather
+  daily: DailyForecast[]
+}
+
 // Define the structure for a single Result item
 // This uses a discriminated union for the 'subtype' to ensure type safety if
 // other subtypes are introduced with different data structures.
 export interface RichResult {
-  subtype: 'unitconversion' | 'currency' | 'translator' | 'timezones'
+  subtype: 'unitconversion' | 'currency' | 'translator' | 'timezones' | 'definitions' | 'weather'
   provider: Provider
   flights: null // Or a more specific type if 'flights' can have data
-  definitions: null // Or a more specific type if 'definitions' can have data
+  definitions: Definition // Or a more specific type if 'definitions' can have data
   web3: null // Or a more specific type
   stock: null // Or a more specific type
   translator: Translator // Or a more specific type
@@ -2889,7 +3035,7 @@ export interface RichResult {
   stopwatch: boolean
   packagetracker: null // Or a more specific type
   unixTimestamp: null // Or a more specific type
-  weather: null // Or a more specific type
+  weather: Weather // Or a more specific type
   cryptocurrency: null // Or a more specific type
   timezones: Timezone // Or a more specific type
   data: Record<string, any> // Represents an object with string keys and any values
@@ -2899,4 +3045,23 @@ export interface RichResult {
 export interface Rich {
   type: 'rich'
   results: RichResult[]
+}
+
+export type QueryComponent = [boolean, string]
+
+/**
+ * Represents a complete related query, which is an array of QueryComponent tuples.
+ * Each inner array in the 'related_queries' list will conform to this type.
+ *
+ * Example: [ [false, "katy"], [false, "perry"], [true, "net"], [true, "worth"] ]
+ */
+export type SingleRelatedQuery = QueryComponent[]
+
+/**
+ * Represents the overall structure for the "related_queries" field.
+ * It is an array where each element is a 'SingleRelatedQuery'.
+ * This matches the top-level array containing multiple related query suggestions.
+ */
+export interface RelatedQueries {
+  related_queries: SingleRelatedQuery[]
 }

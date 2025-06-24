@@ -4,7 +4,7 @@ import { jsonrepair } from 'jsonrepair'
 import type { Node } from 'oxc-parser'
 import fs from 'fs'
 
-import { GenericInfobox, InfoboxPlace, InfoboxWithLocation, News, QAInfobox, Rich, Search, Videos } from './types'
+import { Discussions, GenericInfobox, InfoboxPlace, InfoboxWithLocation, News, QAInfobox, Query, Rich, Search, Videos } from './types'
 
 // https://github.com/erik-balfe/brave-search/blob/master/src/types.ts#L704
 
@@ -15,11 +15,13 @@ export interface GraphInfobox {
 
 export interface WebSearchApiResponse {
   type: 'search'
+  query?: Query
   web?: Search
   videos?: Videos
   news?: News
   rich?: Rich
   infobox?: GraphInfobox
+  discussions: Discussions
 }
 
 interface Body {
@@ -54,13 +56,16 @@ export function extractJsData(body: string): Promise<RootObject> {
           const end = node.end
           let rawData = body.slice(start, end)
 
-          rawData = rawData.replaceAll('void 0', 'null')
-          //fs.writeFileSync('./data/data.js', rawData)
+          rawData = rawData
+            .replaceAll('void 0', 'null') // void
+            .replaceAll(/(?<!\d)(-?)\.(\d+)\b/g, '$10.$2') // decimal .96
+
+          //fs.writeFileSync('./data/data.js', newdata)
 
           try {
             const parsedData = parse(jsonrepair(rawData))
 
-            fs.writeFileSync('./data/data.json', JSON.stringify(rawData))
+            fs.writeFileSync('./data/data.json', JSON.stringify(parsedData, null, 2))
             if (Array.isArray(parsedData) && parsedData.length >= 1) {
               dataFound = true
               let [, responseData] = parsedData

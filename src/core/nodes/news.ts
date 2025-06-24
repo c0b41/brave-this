@@ -1,13 +1,11 @@
 import { RootObject } from '#utils/brave'
 import { NewsResult } from '#utils/brave/types'
 
-// Define interface for top story item
 export interface NewsItem {
   description: string
   url: string
 }
 
-// Main class (mostly just a namespace wrapper)
 export default class News {
   /**
    * Parses top stories from HTML

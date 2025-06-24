@@ -1,3 +1,4 @@
+import { UndiciHeaders } from 'undici/types/dispatcher'
 import userAgents from './user-agents.json'
 import { request } from 'undici'
 
@@ -16,22 +17,32 @@ export class SearchError extends Error {
 }
 
 export interface HeaderOptions {
+  headers?: UndiciHeaders
   mobile?: boolean
-  additionalHeaders?: Record<string, string | number>
 }
 
-export function getHeaders(options: HeaderOptions = {}): Record<string, string | number> {
-  const uaList = userAgents[options.mobile ? 'mobile' : 'desktop']
-  const ua = uaList[Math.floor(Math.random() * uaList.length)]
+export function getHeaders(options: HeaderOptions = {}): UndiciHeaders {
+  const available_agents = userAgents[options.mobile ? 'mobile' : 'desktop']
+  const ua = available_agents[0]
 
   return {
-    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
     'accept-encoding': 'gzip, deflate',
     'accept-language': 'en-US,en;q=0.5',
-    referer: 'https://search.brave.com/',
-    'upgrade-insecure-requests': 1,
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    priority: 'u=0, i',
+    'sec-ch-ua': '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'none',
+    'sec-fetch-user': '?1',
+    'sec-gpc': '1',
+    'upgrade-insecure-requests': '1',
     'user-agent': ua,
-    ...options.additionalHeaders,
+    cookie: 'useLocation=0; summarizer=0',
+    //referer: 'https://search.brave.com/',
+    ...options.headers,
   }
 }
 
@@ -63,16 +74,18 @@ export function getRandomInt(min: number, max: number): number {
 export interface FetchHTMLParams {
   url: string
   options: {
-    headers?: Record<string, string | number>
+    headers?: UndiciHeaders
   }
 }
 
 export async function fetchHTML({ url, options }: FetchHTMLParams): Promise<string> {
   try {
     const { headers } = options
+
+    console.log(`Request Header ${JSON.stringify(headers, null, 2)}`)
     const { body } = await request(url, {
       method: 'GET',
-      //headers: headers ?? {}
+      headers: headers ?? {},
     })
     return await body.text()
   } catch (error) {

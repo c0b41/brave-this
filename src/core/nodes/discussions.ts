@@ -1,9 +1,7 @@
 import { RootObject } from '#utils/brave'
-import { SearchResult } from '#utils/brave/types'
 import constants from '#utils/constants'
-import { URL } from 'url'
 
-interface OrganicResult {
+export interface Discussion {
   title: string
   description: string
   url: string
@@ -13,14 +11,14 @@ interface OrganicResult {
   }
 }
 
-export default class OrganicResults {
-  static parse($: any, jsData: RootObject): OrganicResult[] {
-    let data = jsData.data.body.response.web
+export default class Discussions {
+  static parse($: any, jsData: RootObject): Discussion[] {
+    let discussions: Discussion[] = []
 
-    let results: OrganicResult[] = []
+    let data = jsData.data.body.response.discussions
 
-    if (data && data.results && Array.isArray(data.results) && data.results.length > 0) {
-      results = data.results.map((item: SearchResult) => {
+    if (data) {
+      discussions = data.results.map((item: any) => {
         let domain = new URL(item.url || constants.URLS.BRAVE).hostname
 
         const highResFavicon = `${constants.URLS.FAVICONKIT}/${domain}/192`
@@ -38,6 +36,6 @@ export default class OrganicResults {
       })
     }
 
-    return results
+    return discussions
   }
 }

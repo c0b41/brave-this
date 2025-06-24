@@ -1,31 +1,40 @@
+import { RootObject } from '#utils/brave'
+import { PartOfSpeechDefinition } from '#utils/brave/types'
 import constants from '#utils/constants'
 
-export default class Dictionary {
+export interface DictionaryData {
   word: string | null
-  phonetic: string | null
+  pronunciation: string | null
   audio: string | null
-  definitions: string[]
-  examples: string[]
+  definitions: PartOfSpeechDefinition[]
+}
 
-  constructor(private $: any) {
-    const rawWord = $(constants.SELECTORS.GD_WORD).text().trim()
-    const rawPhonetic = $(constants.SELECTORS.GD_PHONETIC).text().trim()
-    const rawAudio = $(constants.SELECTORS.GD_AUDIO).attr('src')
+export default class Dictionary {
+  /**
+   * Parses top stories from HTML
+   */
+  static parse($: any, jsData: RootObject): DictionaryData | null {
+    let definitionData = jsData.data.body.response.rich?.results.find((item) => item.subtype == 'definitions')
 
-    this.word = rawWord || null
-    this.phonetic = rawWord ? rawPhonetic || 'N/A' : null
-    this.audio = rawWord && rawAudio ? `https:${rawAudio}` : null
+    if (definitionData && definitionData.definitions) {
+      let audioUrl = new URL(constants.URLS.BRAVE_DEFINITIONS)
 
-    this.definitions = rawWord
-      ? $(constants.SELECTORS.GD_DEFINITIONS)
-          .map((i, el) => $(el).text().trim())
-          .get()
-      : []
+      const params = new URLSearchParams({
+        word: definitionData.definitions.word,
+        lang: definitionData.definitions.language,
+        source: definitionData.definitions.source_dict,
+      })
 
-    this.examples = rawWord
-      ? $(constants.SELECTORS.GD_EXAMPLES)
-          .map((i, el) => $(el).text().trim())
-          .get()
-      : []
+      audioUrl.search = params.toString()
+
+      return {
+        word: definitionData.definitions.word,
+        pronunciation: definitionData.definitions.pronounciation,
+        audio: audioUrl.toString(),
+        definitions: definitionData.definitions.definitions,
+      }
+    }
+
+    return null
   }
 }
