@@ -3,12 +3,7 @@ import userAgents from './user-agents.json'
 import { fetch, setGlobalDispatcher, buildConnector, Agent, HeadersInit, Headers } from 'undici'
 import tls from 'https-tls'
 import { version } from '../../package.json'
-
-// Initialize debug namespaces
-const debugFetch = debug('fetch')
-const debugError = debug('error')
-
-console.log(process.env.DEBUG)
+const debugBrave = debug('brave')
 
 export class SearchError extends Error {
   info?: any
@@ -33,7 +28,7 @@ export function getHeaders(options: RequestOptions = {}): Headers {
   // Defensive check for userAgents structure
   const available_agents = userAgents[options.mobile ? 'mobile' : 'desktop']
   if (!available_agents || available_agents.length === 0) {
-    debugError('No user agents found for the specified type (mobile/desktop). Using a default.')
+    debugBrave('No user agents found for the specified type (mobile/desktop). Using a default.')
     // Fallback to a generic user agent or throw an error if no agents are critical
     return new Headers({ 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36' })
   }
@@ -90,7 +85,6 @@ export function getRandomInt(min: number, max: number): number {
 export interface FetchHTMLParams {
   url: string
   options?: {
-    // Make options optional to align with getHeaders default
     headers?: Headers
   }
 }
@@ -106,14 +100,14 @@ export async function fetchHTML({ url, options = {} }: FetchHTMLParams): Promise
         connect: connector,
       })
       setGlobalDispatcher(tlsAgent)
-      debugFetch(`Fetch TLS fingerprinting dispatcher active for user-agent: ${headers.get('user-agent')}`)
+      debugBrave(`Fetch TLS fingerprinting dispatcher active for user-agent: ${headers.get('user-agent')}`)
     } else {
-      debugFetch('No specific user-agent provided for TLS fingerprinting, using default dispatcher.')
+      debugBrave('No specific user-agent provided for TLS fingerprinting, using default dispatcher.')
     }
 
-    debugFetch(`Requesting URL: ${url}`)
+    debugBrave(`Requesting URL: ${url}`)
     if (headers) {
-      debugFetch(`Request Headers: ${JSON.stringify(Object.fromEntries(headers.entries()), null, 2)}`)
+      debugBrave(`Request Headers: ${JSON.stringify(Object.fromEntries(headers.entries()), null, 2)}`)
     }
 
     const response = await fetch(url, {
@@ -122,16 +116,16 @@ export async function fetchHTML({ url, options = {} }: FetchHTMLParams): Promise
     })
 
     if (!response.ok) {
-      debugError(`Search request failed for ${url} with status: ${response.status} ${response.statusText}`)
+      debugBrave(`Search request failed for ${url} with status: ${response.status} ${response.statusText}`)
       throw new SearchError(`Search request failed: ${response.status} ${response.statusText}`, { url, status: response.status, statusText: response.statusText })
     }
 
     const blob = await response.text()
-    debugFetch(`Successfully fetched HTML from ${url}. Content length: ${blob.length}`)
+    debugBrave(`Successfully fetched HTML from ${url}. Content length: ${blob.length}`)
 
     return blob
   } catch (error: any) {
-    debugError(`Failed to fetch HTML from ${url}: ${error.message}`, error) // Log the error details with debugError
+    debugBrave(`Failed to fetch HTML from ${url}: ${error.message}`, error) // Log the error details with debugError
     throw new SearchError(`Failed to fetch HTML from ${url}: ${error.message}`, { url, error })
   }
 }

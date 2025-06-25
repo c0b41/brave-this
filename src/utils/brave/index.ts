@@ -1,10 +1,12 @@
-import { parse, stringify } from 'lossless-json'
+import debug from 'debug'
+import { parse } from 'lossless-json'
 import { parseAndWalk } from 'oxc-walker'
 import { jsonrepair } from 'jsonrepair'
 import type { Node } from 'oxc-parser'
 import fs from 'fs'
-
+import path from 'path'
 import { Discussions, GenericInfobox, InfoboxPlace, InfoboxWithLocation, News, QAInfobox, Query, Rich, Search, Videos } from './types'
+const debugBrave = debug('brave')
 
 // https://github.com/erik-balfe/brave-search/blob/master/src/types.ts#L704
 
@@ -56,25 +58,30 @@ export function extractJsData(body: string): Promise<RootObject> {
           const end = node.end
           let rawData = body.slice(start, end)
 
+          if (process.env.BRAVE_OUTPUT) {
+            fs.writeFileSync(path.join(process.cwd(), './data/data.js'), rawData)
+          }
+
           rawData = rawData
             .replaceAll('void 0', 'null') // void
             .replaceAll(/(?<!\d)(-?)\.(\d+)\b/g, '$10.$2') // decimal .96
 
-          //fs.writeFileSync('./data/data.js', newdata)
-
           try {
             const parsedData = parse(jsonrepair(rawData))
 
-            fs.writeFileSync('./data/data.json', JSON.stringify(parsedData, null, 2))
+            if (process.env.BRAVE_OUTPUT) {
+              fs.writeFileSync(path.join(process.cwd(), './data/data.json'), JSON.stringify(parsedData, null, 2))
+            }
+
             if (Array.isArray(parsedData) && parsedData.length >= 1) {
               dataFound = true
               let [, responseData] = parsedData
               resolve(responseData)
             } else {
-              console.warn('Extracted "data" property is not an array:', parsedData)
+              debugBrave('Extracted "data" property is not an array:', parsedData)
             }
           } catch (jsonError) {
-            console.error('Error parsing or repairing JSON data:', jsonError)
+            debugBrave('Error parsing or repairing JSON data:', jsonError)
           }
         }
       })
@@ -83,7 +90,7 @@ export function extractJsData(body: string): Promise<RootObject> {
         reject(new Error('No array data found for "data" property.'))
       }
     } catch (error) {
-      console.error('Error during JavaScript parsing:', error)
+      debugBrave('Error during JavaScript parsing:', error)
       reject(new Error(`Failed to parse JavaScript body: ${error instanceof Error ? error.message : String(error)}`))
     }
   })

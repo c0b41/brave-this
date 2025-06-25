@@ -19,7 +19,6 @@
     "example": "DEBUG=* node ./examples/index.js"
   },
   "dependencies": {
-    "@babel/generator": "^7.27.5",
     "cheerio": "1.0.0-rc.10",
     "debug": "^4.4.1",
     "https-tls": "^1.0.23",

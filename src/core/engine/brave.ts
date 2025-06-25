@@ -20,14 +20,14 @@ import Weather from '#nodes/weather'
 import Converters from '#nodes/converters'
 import Discussions from '#nodes/discussions'
 import { SearchError } from '#utils'
-
-const debugBrave = debug('engine')
+import path from 'path'
+const debugBrave = debug('brave')
 
 export type SearchParams = {
   query: string
   options?: {
     safe?: 'off' | 'moderate' | 'strict'
-    search_lang?: string
+    lang?: string
     page?: number
     mobile?: boolean
     headers?: Headers
@@ -61,7 +61,7 @@ class BraveEngine {
   async search({ query, options = {} }: SearchParams): Promise<[cheerio.CheerioAPI, RootObject]> {
     debugBrave(`Initiating search for query: "${query}" with options: %O`, options)
 
-    const { safe, search_lang, headers, mobile, page = 0 } = options
+    const { safe, lang, headers, mobile, page = 0 } = options
 
     // Use URL for robust URL building
     const url = new URL(constants.URLS.BRAVE)
@@ -71,8 +71,8 @@ class BraveEngine {
       url.searchParams.set('safe', safe)
     }
 
-    if (search_lang) {
-      url.searchParams.set('search_lang', search_lang)
+    if (lang) {
+      url.searchParams.set('search_lang', lang)
     }
 
     if (page > 0) {
@@ -99,9 +99,9 @@ class BraveEngine {
       })
 
       // Write HTML to file asynchronously
-      if (process.env.DEBUG) {
+      if (process.env.BRAVE_OUTPUT) {
         try {
-          await fs.writeFile('./data/data.html', html)
+          await fs.writeFile(path.join(process.cwd(), './data/data.html'), html)
           debugBrave('HTML content successfully written to ./data/data.html')
         } catch (fsErr: any) {
           debugBrave(`Failed to write HTML to file: ${fsErr.message}`)
