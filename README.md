@@ -17,7 +17,7 @@ async function performSearch() {
             query: 'latest tech news',
             options: {
                 safe: 'moderate',
-                search_lang: 'en-US',
+                lang: 'en-US',
                 page: 0,
                 mobile: false
             }
