@@ -1,17 +1,17 @@
 {
   "name": "@c0b41/brave-this",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "",
   "license": "MIT",
   "files": [
     "dist"
   ],
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "require": "./dist/index.cjs",
+      "require": "./dist/index.js",
       "import": "./dist/index.mjs"
     }
   },
