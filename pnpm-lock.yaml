@@ -14,6 +14,12 @@ importers:
       cheerio:
         specifier: 1.0.0-rc.10
         version: 1.0.0-rc.10
+      debug:
+        specifier: ^4.4.1
+        version: 4.4.1
+      https-tls:
+        specifier: ^1.0.23
+        version: 1.0.23
       jsonrepair:
         specifier: ^3.12.0
         version: 3.12.0
@@ -26,7 +32,14 @@ importers:
       undici:
         specifier: ^7.10.0
         version: 7.10.0
+    optionalDependencies:
+      win-node-env:
+        specifier: ^0.6.1
+        version: 0.6.1
     devDependencies:
+      '@types/debug':
+        specifier: ^4.1.12
+        version: 4.1.12
       '@types/node':
         specifier: ^17.0.31
         version: 17.0.45
@@ -524,8 +537,14 @@ packages:
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
 
+  '@types/debug@4.1.12':
+    resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
+
   '@types/estree@1.0.7':
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
+
+  '@types/ms@2.1.0':
+    resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
   '@types/node@17.0.45':
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
@@ -681,6 +700,10 @@ packages:
 
   htmlparser2@6.1.0:
     resolution: {integrity: sha512-gyyPk6rgonLFEDGoeRgQNaEUvdJ4ktTmmUh/h2t7s+M8oPpIPxgNACWa+6ESR57kXstwqPiCut0V8NRpcwgU7A==}
+
+  https-tls@1.0.23:
+    resolution: {integrity: sha512-Dv58PL/eLY1icnsJH/wsHarXC0kZb3MZQ+vlfPf8l6+OxDw1AX9DeJTmB78qh+2vdm/kFtFrUEiBsR+172aIyg==}
+    engines: {node: '>= 18'}
 
   is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
@@ -951,6 +974,11 @@ packages:
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
+    hasBin: true
+
+  win-node-env@0.6.1:
+    resolution: {integrity: sha512-oR+MLQ6jdvwqkLEkKBYxRvBOYbTlQV9dJKn8vLzjA4HCzcqdlCE6H1oOvA7lAdCgNXiOX0xfjl/Y47ZcZN6FDA==}
+    os: [win32]
     hasBin: true
 
   wrap-ansi@7.0.0:
@@ -1286,7 +1314,13 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/debug@4.1.12':
+    dependencies:
+      '@types/ms': 2.1.0
+
   '@types/estree@1.0.7': {}
+
+  '@types/ms@2.1.0': {}
 
   '@types/node@17.0.45': {}
 
@@ -1464,6 +1498,8 @@ snapshots:
       domhandler: 4.3.1
       domutils: 2.8.0
       entities: 2.2.0
+
+  https-tls@1.0.23: {}
 
   is-fullwidth-code-point@3.0.0: {}
 
@@ -1749,6 +1785,9 @@ snapshots:
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
+
+  win-node-env@0.6.1:
+    optional: true
 
   wrap-ansi@7.0.0:
     dependencies:

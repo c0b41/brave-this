@@ -1,8 +1,6 @@
 import BraveEngine, { SearchParams } from '#engine/brave'
-import * as cheerio from 'cheerio'
 import { SearchError } from '#utils'
-import { extractJsData } from '#utils/brave'
-import { SearchResult } from '#engine/brave'
+import { BraveSearchResult } from '#engine/brave'
 
 import OrganicResults from '#nodes/organicresults'
 import KnowledgeGraph from '#nodes/knowledgegraph'
@@ -18,21 +16,14 @@ import DidYouMean from '#nodes/didyoumean'
 import RelatedQuerys from '#nodes/relatedquery'
 import Discussions from '#nodes/discussions'
 
-async function search({ query, options = {} }: SearchParams): Promise<SearchResult> {
+async function search({ query, options = {} }: SearchParams): Promise<BraveSearchResult> {
   if (!query) throw new SearchError('Query is required.', query)
 
-  const braveEngine = new BraveEngine()
-
-  const response = await braveEngine.search({ query, options })
-
-  const $: cheerio.CheerioAPI = cheerio.load(response.data)
-
-  let js_data_text = $('script').html() ?? ''
-  let jsData = await extractJsData(js_data_text)
+  const [$, jsData] = await new BraveEngine().search({ query, options })
 
   return {
     results: OrganicResults.parse($, jsData),
-    knowledges: new KnowledgeGraph($, jsData),
+    knowledges: KnowledgeGraph.parse($, jsData),
     videos: Videos.parse($, jsData),
     weather: Weather.parse($, jsData),
     time: Time.parse($, jsData),
@@ -40,9 +31,9 @@ async function search({ query, options = {} }: SearchParams): Promise<SearchResu
     dictionary: Dictionary.parse($, jsData),
     translation: Translation.parse($, jsData),
     news: News.parse($, jsData),
-    units: Converters.parse($, jsData),
+    converters: Converters.parse($, jsData),
     didYouMean: DidYouMean.parse($, jsData),
-    relatedQuerys: RelatedQuerys.parse($, jsData),
+    relatedqueries: RelatedQuerys.parse($, jsData),
     discussions: Discussions.parse($, jsData),
   }
 }
