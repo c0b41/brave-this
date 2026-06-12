@@ -111,8 +111,12 @@ class BraveEngine {
       debugBrave(`Loading HTML into Cheerio. HTML length: ${html.length}`)
       const $: cheerio.CheerioAPI = cheerio.load(html)
 
-      // More robust JS data extraction
-      let js_data_text: string = $('script').html() ?? ''
+      // Find correct script tag
+      let js_data_text: string =
+        $('script')
+          .toArray()
+          .map((el) => $(el).html() || '')
+          .find((text) => text.includes('__sveltekit')) ?? ''
 
       if (!js_data_text) {
         debugBrave('Could not find the script tag containing the main JavaScript data.')
