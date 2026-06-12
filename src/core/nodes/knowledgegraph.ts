@@ -46,9 +46,9 @@ export default class KnowledgeGraph {
   }
 
   private static _getDescription(metadata: any): Array<string | undefined> {
-    const desc = metadata?.description
-    const desc2 = metadata?.long_desc
-    return [desc, desc2]
+    const description = metadata?.long_desc || metadata?.description
+
+    return description ? [description] : []
   }
 
   private static _getUrl(metadata: any): string | null {
