@@ -30,7 +30,7 @@ export function getHeaders(options: RequestOptions = {}): Headers {
   if (!available_agents || available_agents.length === 0) {
     debugBrave('No user agents found for the specified type (mobile/desktop). Using a default.')
     // Fallback to a generic user agent or throw an error if no agents are critical
-    return new Headers({ 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36' })
+    return new Headers({ 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36' })
   }
 
   const ua = available_agents[0]
@@ -52,7 +52,7 @@ export function getHeaders(options: RequestOptions = {}): Headers {
     'user-agent': ua,
     cookie: 'useLocation=0; summarizer=0',
     ...options.headers,
-    // referer: 'https://search.brave.com/', // Keep commented if not actively used
+    referer: 'https://search.brave.com/', // Keep commented if not actively used
   })
 }
 
