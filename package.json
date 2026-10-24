@@ -1,7 +1,7 @@
 {
   "name": "@c0b41/brave-this",
-  "version": "0.5.0",
-  "description": "",
+  "version": "0.6.0",
+  "description": "Unofficial Brave Search scraper with debug artifact capture.",
   "license": "MIT",
   "files": [
     "dist"
@@ -22,7 +22,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "prepublishOnly": "npm run build",
-    "example": "DEBUG=* node ./examples/index.js"
+    "debug": "cross-env BRAVE_OUTPUT=1 DEBUG=brave:* node ./examples/index.js"
   },
   "dependencies": {
     "cheerio": "1.0.0-rc.10",
@@ -38,10 +38,8 @@
     "@types/node": "^17.0.31",
     "oxc-parser": "^0.73.2",
     "tsup": "^8.4.0",
-    "typescript": "^5.8.2"
-  },
-  "optionalDependencies": {
-    "win-node-env": "^0.6.1"
+    "typescript": "^5.8.2",
+    "cross-env": "^7.0.3"
   },
   "packageManager": "pnpm@9.15.0",
   "repository": {

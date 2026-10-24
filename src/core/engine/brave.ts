@@ -1,27 +1,14 @@
 import debug from 'debug'
-import { fetchHTML, getHeaders } from '#utils'
-import constants from '#utils/constants'
-import { Headers } from 'undici'
 import * as cheerio from 'cheerio'
-import { extractJsData, RootObject } from '#utils/brave'
-import fs from 'fs/promises'
+import { Headers } from 'undici'
 
-import Dictionary from '#nodes/dictionary'
-import DidYouMean from '#nodes/didyoumean'
-import KnowledgeGraph from '#nodes/knowledgegraph'
-import Location from '#nodes/location'
-import News from '#nodes/news'
-import OrganicResults from '#nodes/organicresults'
-import RelatedQuerys from '#nodes/relatedquery'
-import Time from '#nodes/time'
-import Translation from '#nodes/translation'
-import Videos from '#nodes/videos'
-import Weather from '#nodes/weather'
-import Converters from '#nodes/converters'
-import Discussions from '#nodes/discussions'
-import { SearchError } from '#utils'
-import path from 'path'
-const debugBrave = debug('brave')
+import { fetchHTML, getHeaders } from '#utils/http'
+import { SearchError } from '#utils/errors'
+import { extractJsData, RootObject } from '#utils/brave'
+import constants from '#utils/constants'
+import { resolveDebugContext, saveHtml, saveJsPayload, saveJsonPayload, saveMeta, DebugContext } from '#debug/artifacts'
+
+const debugBrave = debug('brave:engine')
 
 export type SearchParams = {
   query: string
@@ -30,110 +17,71 @@ export type SearchParams = {
     lang?: string
     page?: number
     mobile?: boolean
+    /** Explicit UA. Overrides the built-in pool. */
+    userAgent?: string
     headers?: Headers
-    // Keep these commented if not actively used, or remove if truly deprecated
-    // ris?: boolean;
-    // parse_ads?: boolean;
+    debugDir?: string
   }
 }
 
-export type BraveSearchResult = {
-  results: OrganicResults | null
-  knowledges: KnowledgeGraph | null
-  news: News | null
-  videos: Videos | null
-  weather: Weather | null
-  time: Time | null
-  location: Location | null
-  dictionary: Dictionary | null
-  translation: Translation | null
-  converters: Converters | null
-  didYouMean: DidYouMean | null
-  relatedqueries: RelatedQuerys | null
-  discussions: Discussions | null
+export interface RawSearchResult {
+  $: cheerio.CheerioAPI
+  jsData: RootObject
+  debugCtx: DebugContext
 }
 
-class BraveEngine {
-  constructor() {
-    debugBrave('BraveEngine instance created.')
-  }
+export class BraveEngine {
+  async search({ query, options = {} }: SearchParams): Promise<RawSearchResult> {
+    debugBrave('search query=%s options=%O', query, options)
+    const { safe, lang, headers, mobile, userAgent, page = 0, debugDir } = options
 
-  async search({ query, options = {} }: SearchParams): Promise<[cheerio.CheerioAPI, RootObject]> {
-    debugBrave(`Initiating search for query: "${query}" with options: %O`, options)
-
-    const { safe, lang, headers, mobile, page = 0 } = options
-
-    // Use URL for robust URL building
     const url = new URL(constants.URLS.BRAVE)
     url.searchParams.set('q', query)
+    if (safe) url.searchParams.set('safe', safe)
+    if (lang) url.searchParams.set('search_lang', lang)
+    if (page > 0) url.searchParams.set('offset', String(page * 10))
 
-    if (safe) {
-      url.searchParams.set('safe', safe)
-    }
-
-    if (lang) {
-      url.searchParams.set('search_lang', lang)
-    }
-
-    if (page > 0) {
-      url.searchParams.set('offset', String(page * 10))
-    }
-
-    debugBrave(`Constructed request URL: ${url.toString()}`)
+    const debugCtx = resolveDebugContext(query, { mobile, lang, page })
+    if (debugDir) debugCtx.dir = debugDir
 
     try {
-      // Ensure headers are always a Headers instance
       const requestHeaders = getHeaders({
-        headers: headers ?? new Headers(), // Provide a new Headers if none are given
-        mobile: mobile,
+        headers: headers ?? undefined,
+        mobile,
+        userAgent,
       })
+      debugBrave('GET %s', url.toString())
 
-      debugBrave(`Fetching HTML from: ${url.toString()}`)
-      debugBrave(`Request Headers for fetch: %O`, Object.fromEntries(requestHeaders.entries()))
+      const html = await fetchHTML({ url: url.toString(), options: { headers: requestHeaders } })
 
-      const html = await fetchHTML({
-        url: url.toString(),
-        options: {
-          headers: requestHeaders,
-        },
-      })
+      await saveHtml(debugCtx, html)
+      await saveMeta(debugCtx, { url: url.toString(), mobile, lang, page, safe })
 
-      // Write HTML to file asynchronously
-      if (process.env.BRAVE_OUTPUT) {
-        try {
-          await fs.writeFile(path.join(process.cwd(), './data/data.html'), html)
-          debugBrave('HTML content successfully written to ./data/data.html')
-        } catch (fsErr: any) {
-          debugBrave(`Failed to write HTML to file: ${fsErr.message}`)
-        }
-      }
+      const $ = cheerio.load(html)
 
-      debugBrave(`Loading HTML into Cheerio. HTML length: ${html.length}`)
-      const $: cheerio.CheerioAPI = cheerio.load(html)
-
-      // Find correct script tag
-      let js_data_text: string =
+      const js_data_text: string =
         $('script')
           .toArray()
           .map((el) => $(el).html() || '')
           .find((text) => text.includes('__sveltekit')) ?? ''
 
       if (!js_data_text) {
-        debugBrave('Could not find the script tag containing the main JavaScript data.')
-        throw new SearchError('Failed to extract main JavaScript data from HTML.')
+        throw new SearchError('Failed to extract main JavaScript data from HTML.', { query })
       }
 
-      debugBrave('Extracting JS data...')
-      const jsData: RootObject = await extractJsData(js_data_text)
-      debugBrave('JS data extracted successfully.')
+      await saveJsPayload(debugCtx, js_data_text)
 
-      return [$, jsData]
-    } catch (error: any) {
-      debugBrave(`BraveEngine search failed for query "${query}": ${error.message}`, error) // Use debugError
-      if (error instanceof SearchError) {
-        throw error
-      }
-      throw new SearchError(`BraveEngine search failed for query "${query}": ${error.message}`, { query, error })
+      debugBrave('extracting JS data...')
+      const jsData = await extractJsData(js_data_text)
+      await saveJsonPayload(debugCtx, jsData)
+
+      debugBrave('search ok query=%s', query)
+      return { $, jsData, debugCtx }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      debugBrave('search failed query=%s err=%s', query, message)
+      if (err instanceof SearchError) throw err
+      throw new SearchError(`Search failed for query "${query}": ${message}`, { query, error: message })
     }
   }
 }
